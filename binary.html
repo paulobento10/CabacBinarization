@@ -1,0 +1,398 @@
+<html lang="pt-PT">
+<!--Autor: Pedro Costa !!! Incrivel -->
+
+<head>
+  <link rel="stylesheet" href="style.css">
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+</head>
+
+<body>
+  <div class="full-screen">
+    <div>
+      <a class="button-line" href="info.html">Voltar</a>
+      <h1> H.264/MPEG-4 AVC</h1>
+      <h1>Binarização de algoritmo de CABAC</h1>
+      <a class="button-line" href="">Iniciar</a>
+      <p >Imagem 8x8 em formato BMP:</p>
+      <img style= "display: none;" src="" id="myimage" />
+      <img src="" id="myimagePreview" />
+      <canvas style= "display: none;" id="cs"></canvas>
+      <p  id="sizeimage" >Tamanho de imagem com RGB: </p>
+      <p > Valor original dos pixeis em RGB :</p>
+      <textarea readonly rows="5" cols="50" id="valT" style="margin: 0px; width: 544px; height: 169px;"></textarea>
+      <p id="sizeunarytreecode"> Unary Code Tree: </p>
+      <textarea readonly rows="5" cols="50" id="bin" style="margin: 0px; width: 544px; height: 169px;"></textarea>
+      <p id="sizeexponetial">ExponentialGolombcoding: </p>
+      <textarea readonly rows="5" cols="50" id="egco" style="margin: 0px; width: 544px; height: 169px;"></textarea>
+      <p id="unaryKorder">Unary/ th order Exp-Golomb (CutOff=3): </p>
+      <textarea readonly rows="5" cols="50" id="uegk" style="margin: 0px; width: 544px; height: 169px;"></textarea>
+      <p id="sizetruncated">Truncated Unary: </p>
+      <textarea readonly rows="5" cols="50" id="TU" style="margin: 0px; width: 544px; height: 169px;"></textarea>
+      <p id="sizefixedlengh">Fixed Length binary: </p>
+      <textarea readonly rows="5" cols="50" id="flb" style="margin: 0px; width: 544px; height: 169px;"></textarea>
+    </div>
+  </div>
+
+
+
+  <div style="margin-top:50px" >
+    <h2 class="loggerh1">Loggers:</h2>
+    <div class="tbl-header">
+      <table align="center" cellpadding="0" cellspacing="0" border="0">
+        <col heigth="100px" />
+        <col heigth="100px" />
+        <col heigth="100px" />
+        <col heigth="100px" />
+        <col heigth="100px" />
+        <tr>
+          <th>Real Time logger:</th>
+          <th>Real Time Unary tree code:</th>
+          <th>Real Time Exponential Golomb-coding:</th>
+          <th> Truncated Unary:(Precisa de todos os dados RGB)</th>
+          <th>Fixed Length Coding:(Precisa de todos os dados RGB)</th>
+        </tr>
+        <tbody>
+          <tr>
+            <td style="white-space:pre;" id="log"></td>
+            <td style="white-space:pre;" id="logUnaryTree"></td>
+            <td style="white-space:pre;" id="logExponcialGolombConding"></td>
+            <td style="white-space:pre;" id="logtruncatedUnary"></td>
+            <td style="white-space:pre;" id="logFixedCoding"></td>
+          </tr>
+        </tbody>
+      </div>
+    </table>
+    <table cellpadding="0" cellspacing="0" border="0"align="center">
+      <col heigth="100px"/>
+      <tr>
+        <th>Real Time Unary/ th order Exp-Golomb (CutOff=3):</th>
+      </tr>
+      <tr>
+        <td style=" margin-top:10px; white-space:pre;" class="pre" id="logUEGK"></td>
+      </tr>
+    </table>
+  </div>
+</body>
+
+<script>
+var logger = document.getElementById('log');
+var loggerUTC= document.getElementById('logUnaryTree');
+var loggerTruncatedU=document.getElementById('logtruncatedUnary');
+var loggerfixedcoding=document.getElementById('logFixedCoding');
+var loggerUEGK = document.getElementById('logUEGK');
+logger.innerHTML="";
+loggerUTC.innerHTML="";
+logExponcialGolombConding.innerHTML="";
+loggerTruncatedU.innerHTML="";
+loggerfixedcoding.innerHTML="";
+loggerUEGK.innerHTML="";
+var bmpTeste="data:image/bmp;base64,Qk32AAAAAAAAADYAAAAoAAAACAAAAAgAAAABABgAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAA/wAA/////////////wAA/wAA/wAA/wAA/////wAA/wAA/wAA/////wAA/wAA/wAA/wAA/////////////wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAAV3q5V3q5V3q5V3q5V3q5/wAA/wAA/wAAV3q5/wAAV3q5V3q5/wAAJ3//J3///wAAV3q5V3q5/wAA/wAA/wAAJ3//J3///wAA/wAA/wAA/wAA/wAA/wAA";
+document.getElementById("myimage").src = bmpTeste;
+document.getElementById("myimagePreview").src = bmpTeste;
+document.getElementById("myimagePreview").width=200;
+document.getElementById("myimagePreview").height=200;
+
+
+var img= document.getElementById('myimage');
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function isBinary(num)
+{
+  var i;
+  for(i=0;i< num.length;i++)
+  {
+    if(num[i]!=0 && num[i]!=1)
+    {
+      return false;
+    }
+
+  }
+  return true;
+}
+function binaryConvert(num) {
+  var binary = parseInt(num, 10); // base decimal no parseInt
+  binary=binary.toString(2);//Devolve em binario gracas ao dois
+  return binary;
+}
+function findMaxNumber(values)
+{
+  var max=-1;
+  var count=values.length;
+  var i;
+  var val;
+  for(i=0; i<count;i++)
+  {
+    val=parseInt(values[i]);
+    if(val > max)
+    {
+      max=val;
+    }
+  }
+  return max;
+}
+
+function unarycodeTree(val){
+  var code="";
+  var j;
+  loggerUTC.innerHTML="";
+  if(isBinary(val))
+  {
+    loggerUTC.innerHTML+= "É binario: "+val+"\n";
+    return val;
+  }
+  loggerUTC.innerHTML+= "Não é binario: "+val+"\n";
+  for(j=0;j<val;j++)
+  {
+    code+="0";
+  }
+  code+="1";
+  loggerUTC.innerHTML+= val+": Código apos algoritmo:"+j+"x0"+"+1"+"\n";
+  return code;
+}
+async function truncatedUnary(values)
+{
+  var code="";
+  var aux=0;
+  var max= findMaxNumber(values);
+  var binLn= binaryConvert(max);
+  loggerTruncatedU.innerHTML+="Valor Maximo:"+max+"\n";
+  binLn=binLn.length;
+  var j;
+  var two=1;
+  for(j=0; j<binLn; j++)
+  {
+    two*=2;
+  }
+  var unused= two-(max-1);
+  loggerTruncatedU.innerHTML+="Valores não usamos:"+unused+"\n";
+  for(j=0;j<values.length;j++)
+  {
+    if(isBinary(values[j]))
+    {
+      loggerTruncatedU.innerHTML+="Valor binário: "+values[j]+"\n";
+      code+=values[j];
+    }
+    else if(values[j]< unused)
+    {
+      binLn= binaryConvert(values[j]);
+      binLn=binLn.slice(0, 1);
+      code+=binLn;
+      loggerTruncatedU.innerHTML+="Valor "+values[j]+" não usado :"+ binLn+"\n";
+    }
+    else {
+      aux= (unused + parseInt(values[j]))-1 ;
+      aux=aux.toString();
+      code+=binaryConvert(aux);
+      loggerTruncatedU.innerHTML+="Valor "+values[j]+":"+ binaryConvert(aux)+"\n";
+    }
+    document.getElementById("TU").defaultValue = code;
+    await sleep(1200);
+    loggerTruncatedU.innerHTML="";
+  }
+  return code;
+}
+
+/**
+* Unary/ th order Exp-Golomb
+* s - cutoff
+*/
+function uegk(val,s){
+  //prefixo usa o UT
+  var prefix=''; //min mvd - min(|mvd|,9)
+  var sufix='';
+  if(isBinary(val))
+  {
+    loggerUEGK.innerHTML+="Binario: "+val+"\n";
+    return val;
+  }
+  prefix=unarycodeTree(val);
+  loggerUEGK.innerHTML+="valor: "+val+": prefix: "+prefix+"\n";
+  var mvd_min=prefix.length-1;
+  loggerUEGK.innerHTML+="mvd_min: "+ mvd_min+"\n";
+  if (mvd_min==0 && mvd_min<=(s-1))
+  {
+    prefix='0';
+    loggerUEGK.innerHTML+="prefix: "+prefix+"\n";
+  }
+  else if ((Math.abs(mvd_min)-s)>0)
+  {
+    prefix+='0';
+    loggerUEGK.innerHTML+="prefix: "+prefix+"\n";
+  }
+  else if ((Math.abs(mvd_min)-s)<0)
+  {
+    prefix+='1';
+    loggerUEGK.innerHTML+="prefix: "+prefix+"\n";
+  }
+  //sufixo usa o ExponentialGolombcoding
+  if (mvd_min>0 && mvd_min<s)
+  {
+    sufix=ExponentialGolombcoding(val);
+    loggerUEGK.innerHTML+=val+": sufix: "+sufix+"\n";
+  }
+  loggerUEGK.innerHTML+="prefix+sufix: "+prefix+sufix;
+  return prefix+sufix;
+}
+
+
+async function fixedLengthBinary(values)
+{
+  var i,j;
+  var zeros="";
+  var code="";
+  var aux=0;
+  var zeroscount=0;
+  var sizeaux="", auxval="";
+  var max= findMaxNumber(values);
+  var binLn= binaryConvert(max);
+  binLn=binLn.length;
+  for(i=0; i<values.length;i++)
+  {
+    loggerfixedcoding.innerHTML="";
+    if(isBinary(values[i]))
+    {
+      loggerfixedcoding.innerHTML+="Valor binario: "+ values[i]+"\n";
+      code+=values[i];
+    }
+    else {
+      auxval=binaryConvert(values[i]);
+      loggerfixedcoding.innerHTML+="Valor: "+values[i]+" binario: "+ auxval+"\n";
+      if(binLn>auxval.length)
+      {
+        var dif=binLn-auxval.length;
+        for(j=0;j<dif;j++)
+        {
+          zeros+="0";
+        }
+        loggerfixedcoding.innerHTML+="Valor: "+values[i]+" binario: "+ auxval+"\n";
+        code+=zeros+auxval;
+        zeros="";
+      }else if(binLn<auxval.length) {// de acordo com o pretendido , este caso de uso nunca e utilizado, esta testado
+        var dif=auxval.length-binLn;
+        for(j=0;j<dif;j++)
+        {
+          zeroscount++;
+        }
+        binLn= binaryConvert(values[j]);
+        auxval=auxval.slice(0, zeroscount);
+        loggerfixedcoding.innerHTML+="Valor: "+values[i]+" binario: "+ auxval+" apos ajuste\n";
+        code+=auval;
+        zeroscount=0;
+      }
+      else {
+        loggerfixedcoding.innerHTML+="Valor: "+values[i]+" binario: "+ auxval+"\n";
+        code+=auxval;
+        zeros="";
+      }
+    }
+    document.getElementById("flb").defaultValue = code;
+    await sleep(1400);
+  }
+  return code;
+}
+
+function ExponentialGolombcoding(val)
+{
+  var code="";
+  var j;
+  var count;
+  var zeros="";
+  aux= parseInt(val)+1;
+  logExponcialGolombConding.innerHTML+="Valor atual +1: "+aux+"\n";
+  aux= aux.toString();
+  if(isBinary(val))
+  {
+    logExponcialGolombConding.innerHTML+="Valor Binário: "+val+"\n";
+    return val;
+  }
+  aux=binaryConvert(aux);
+  logExponcialGolombConding.innerHTML+="Valor Binário de val +1 : "+aux+"\n";
+  count= aux.length-1;
+  for(j=0; j<count; j++)
+  {
+    zeros+="0";
+  }
+  code=zeros+aux;
+  logExponcialGolombConding.innerHTML+="Valor final : "+code+"\n";
+  return code;
+}
+// vais buscar os pixels da imagem por coordenadas
+function getPixel(source, x, y) {
+  var img = new Image(); // cria um objecto de imagem
+  img.src = source; //insiro o source da imagem no objeto
+  var canvas = document.createElement('canvas'); // crio uma tela
+  var context = canvas.getContext('2d'); //
+  context.drawImage(img, 0, 0); // vou buscar o contexto da imagem
+  var pixel= new Array(context.getImageData(x, y, 1, 1).data[0],context.getImageData(x, y, 1, 1).data[1],context.getImageData(x, y, 1, 1).data[2]);
+  return pixel;
+}
+function ImageSize(img)
+{
+  var size=0;
+  size = (img.width*img.height)*3;
+  document.getElementById("sizeimage").innerHTML += size+" bytes";
+}
+
+async function startBin(img)
+{
+  logger.innerHTML +="Inicio\n";
+  ImageSize(img);
+  var i;
+  var x;
+  var y;
+  var pixel;
+  var pixelAll="";
+  var pixelArrayALL= new Array();
+  var binUnaryCodeTree="";
+  var binExponentialGolombcoding="";
+  var binTruncatedUnary="";
+  var uegkv="";
+  logger.innerHTML +="Comprimento "+img.width+"\n";
+  logger.innerHTML +="Altura "+img.height+"\n";
+  for(x=0 ; x< img.width;x++)
+  {
+    for(y=0; y<img.height;y++)
+    {
+      logger.innerHTML +="Buscar pixel da posicao "+x+","+y+" da imagem\n";
+      pixel=getPixel(img.src, x, y);
+      logger.innerHTML +="["+pixel[0]+","+pixel[1]+","+pixel[2]+"]\n";
+      for(i=0; i<pixel.length; i++)
+      {
+        pixelAll+=pixel[i].toString();
+        pixelArrayALL.push(pixel[i].toString());
+        binUnaryCodeTree+=unarycodeTree(pixel[i].toString());
+        binExponentialGolombcoding+=ExponentialGolombcoding(pixel[i].toString());
+        uegkv+=uegk(pixel[i].toString(),3);
+        document.getElementById("uegk").defaultValue=uegkv;
+        document.getElementById("valT").defaultValue = pixelAll;
+        document.getElementById("bin").defaultValue = binUnaryCodeTree;
+        document.getElementById("egco").defaultValue = binExponentialGolombcoding;
+        await sleep(1400);
+        loggerUTC.innerHTML="";
+        logExponcialGolombConding.innerHTML="";
+        loggerUEGK.innerHTML="";
+      }
+      logger.innerHTML="";
+    }
+    logger.innerHTML="";
+  }
+  document.getElementById("unaryKorder").innerHTML +=uegkv.length+" bytes";
+  document.getElementById("sizeunarytreecode").innerHTML +=binUnaryCodeTree.length+" bytes";
+  document.getElementById("sizeexponetial").innerHTML +=binExponentialGolombcoding.length+" bytes";
+  logger.innerHTML="";
+  return pixelArrayALL;
+}
+
+startBin(img).then(function(results){
+  truncatedUnary(results).then(function(binTruncatedUnary){
+    document.getElementById("sizetruncated").innerHTML +=binTruncatedUnary.length+" bytes";
+  });
+  fixedLengthBinary(results).then(function(binFixed){
+    document.getElementById("sizefixedlengh").innerHTML +=binFixed.length+" bytes";
+  });
+});
+</script>
+</html>

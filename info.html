@@ -1,0 +1,45 @@
+<html lang="pt-PT">
+<head>
+  <link rel="stylesheet" href="style.css">
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+</head>
+<body>
+  <div class="full-screen">
+    <div>
+      <h1>H.264/MPEG-4 AVC</h1>
+      <h1>Algoritmo de Binarização do CABAC</h1>
+      <a class="button-line" href="binary.html">Testar</a>
+      <br>
+      <img src="image/diagramablocos.png"/>
+      <p style="margin-left:15%;margin-right:15%;" align="center">Context-adaptive binary arithmetic coding (CABAC) é uma forma de codificação entropia usado nos padrões H.264 / MPEG-4 AVC e High Efficiency Video Coding (HEVC). É uma técnica de codificação sem perdas. O CABAC é notável por fornecer uma codificação muito melhor do que a maioria dos outros algoritmos de codificação de entropia usados na codificação de vídeo, e é um dos elementos-chave que fornece o esquema de codificação H.264 / AVC com melhor capacidade de codificação do que seus antecessores.</p>
+      <p>Por motivos de simplicidade resolvemos focar apenas e exclusivamente no processo de binarização do algoritmo cabac.</p>
+
+      <h2>Explicação de binarização</h2>
+      <p style="margin-left:15%;margin-right:15%;" align="center">No primeiro estado do codificador de entropia CABAC, o estado de binarização mapeia
+        símbolos para uma sequência binária. A maioria dos elementos de sintaxe que devem ser codificados,
+        representado por símbolos, alguns elementos de sintaxe são representados por um código binário.
+        O codificador CABAC é um codificador binário,apenas as decisões binárias são codificadas. O processo
+        binarizar um símbolo em um código binário é muito semelhante ao processo de conversão de um
+        símbolo de dados em um código de comprimento variável.</p>
+        <p style="margin-left:15%;margin-right:15%;" align="center">A binarizacao usa 5 esquemas para codificar os elementos que recebe: Unary Code Tree, Exponential-Golomb coding, Truncated Unary, Unary/ th order Exp-Golomb, fixed length binarization.</p>
+        <h2>Unary Code Tree</h2>
+        <img src="image/unarycodetree.png"/>
+        <p style="margin-left:15%;margin-right:15%;" align="center"> Este esquema ,baseia-se em atribuir o valor do elemento em 0's e terminar sempre com um valor "1" no fim da codificação</p>
+        <h2>Exponential-Golomb coding</h2>
+        <img src="image/exponentialgolomb.png"/>
+        <p style="margin-left:15%;margin-right:15%;" align="center">Para este algoritmo vamos codificar o valor de x+1</p>
+        <p style="margin-left:15%;margin-right:15%;" align="center">Conte os bits do valor, subtraia um e escreva esse número de zero bits iniciais precedendo a sequência de bits anterior.</p>
+        <h2>Truncated Unary</h2>
+        <img src="image/truncatedunary.png"/>
+        <p style="margin-left:15%;margin-right:15%;" align="center">Para um exemplo de 10 elementos(0-9), é necessário 4 bits para codificar em binário, mas existe 2⁴-10=6 codigos binários não usados.</p>
+        <p style="margin-left:15%;margin-right:15%;" align="center">Então valores de entrada menores que 6 têm o primeiro bit descartado, enquanto valores de entrada maiores ou iguais a 6 são compensados por 6 até o final do espaço binário.</p>
+        <h2>Concatenation of the first and second scheme (UEGK)</h2>
+        <p style="margin-left:15%;margin-right:15%;" align="center">É utilizado para binarização de Simbolos de valor absoluto de nível de coeficiente residual e MVD. Gera prefixo da string bin, e EGk é adotado para gerar o sufixo com k definido para 0 e 3 para o nível de coeficiente e MVD, respectivamente. A TU é simples e permite adaptação rápida de probabilidade de codificação símbolo. No entanto, é apenas benéfico para valores pequenos. Para grandes valores, a cadeia de sufixos gerada pelo programa EGk oferece um bom ajuste à distribuição de probabilidades, e também é utilizada a codificação da caixa de bypass para reduzir a complexidade de computação.</p>
+        <h2>Fixed length</h2>
+        <p style="margin-left:15%;margin-right:15%;" align="center">A codificação de comprimento fixo baseia-se na seguinte forma, codificar o elemento recebi no valor binário com o comprimento de o valor maximo, ou seja , para o seguinte :</p>
+        <p style="margin-left:15%;margin-right:15%;" align="center"> codificar 100,255,2 : como 255 é o maior valor em binário (11111111) , necessita de 2³ bits para ser codificado , logo quando codificarmos o valor 2 será como 00000010. </p>
+        <a class="button-line" href="binary.html">Testar</a>
+      </div>
+    </div>
+  </body>
+  </html>
